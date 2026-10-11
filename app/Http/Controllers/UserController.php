@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Models\Role;
 use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -15,23 +17,10 @@ class UserController extends Controller
 
 	public function index(): JsonResponse
 	{
-		$users = User::withTrashed()
-			->whereNull('client_id')
-			->with('role')
-			->latest()
-			->get();
+		$users = $this->userRepository->getInternalUsers();
 
-		// Si tu tabla 'roles' tiene 'name' o 'description', mapeamos o seleccionamos display_name
-		$roles = Role::whereNotIn('name', ['client'])
-			->get()
-			->map(function ($role) {
-				return [
-					'id'           => $role->id,
-					'name'         => $role->name,
-					// Usamos 'display_name' si existe, o 'description', o 'name'
-					'display_name' => $role->display_name ?? $role->description ?? ucfirst($role->name),
-				];
-			});
+		// 2. Roles operativos exclusivos (excluimos 'client' y cualquier rol externo)
+		$roles = $this->userRepository->getRolesWithoutClient();
 
 		return response()->json([
 			'users' => $users,
@@ -39,13 +28,16 @@ class UserController extends Controller
 		]);
 	}
 
+	public function roles(): JsonResponse
+	{
+		$roles = $this->userRepository->getRolesWithoutClient();
+
+		return response()->json($roles);
+	}
+
 	public function store(StoreUserRequest $request): JsonResponse
 	{
-		// Forzamos que sea un usuario interno del equipo (client_id en null)
-		$userData = $request->validated();
-		$userData['client_id'] = null;
-
-		$result = $this->userRepository->createUser($userData);
+		$result = $this->userRepository->createUser($request->validated());
 
 		return response()->json([
 			'message' => 'Colaborador registrado exitosamente.',
@@ -56,13 +48,15 @@ class UserController extends Controller
 		], 201);
 	}
 
-	public function toggleStatus(string $id): JsonResponse
+	public function changePassword(UpdatePasswordRequest $request): JsonResponse
 	{
-		$user = $this->userRepository->toggleStatus($id);
+		$this->userRepository->updatePassword(
+			$request->user(),
+			$request->validated('password')
+		);
 
 		return response()->json([
-			'message' => $user->trashed() ? 'Acceso de colaborador suspendido.' : 'Acceso reactivado.',
-			'user'    => $user,
+			'message' => 'Contraseña actualizada exitosamente.',
 		]);
 	}
 

@@ -30,26 +30,35 @@ class ClientRepository
     public function createClient(array $data): array
     {
         $result = DB::transaction(function () use ($data) {
-            // 1. Registrar empresa cliente
-            $client = Client::create($data);
 
-            // 2. Obtener rol de cliente
-            $clientRole = Role::where('name', 'client')->first();
-            if (! $clientRole) {
-                throw new Exception('El rol "client" no está registrado en la base de datos.');
-            }
+			$client = Client::create([
+							'company_name'    => $data['company_name'],
+							'trade_name'      => $data['trade_name'],
+							'rfc'             => strtoupper(trim($data['rfc'])),
+							'contact_email'   => strtolower(trim($data['contact_email'])),
+							'contact_phone'   => $data['contact_phone'] ?? null,
+							'fiscal_regime'   => $data['fiscal_regime'] ?? null,
+							'fiscal_zip_code' => $data['fiscal_zip_code'] ?? null,
+							'is_active'       => true,
+						]);
 
-            // 3. Contraseña inicial basada en su RFC
-            $initialPassword = strtoupper(trim($data['rfc']));
+			// 2. Obtener rol de cliente
+			$clientRole = Role::where('name', 'client')->first();
+			if (! $clientRole) {
+				throw new Exception('El rol "client" no está registrado en la base de datos.');
+			}
 
-            // 4. Crear usuario vinculado (utilizando deleted_at nativo para bajas lógicas)
-            $user = User::create([
-                'client_id' => $client->id,
-                'role_id'   => $clientRole->id,
-                'name'      => $data['trade_name'] ?: $data['company_name'],
-                'email'     => strtolower(trim($data['contact_email'])),
-                'password'  => Hash::make($initialPassword),
-            ]);
+			// 3. Contraseña inicial basada en su RFC
+			$initialPassword = strtoupper(trim($data['rfc']));
+
+			// 4. Crear usuario vinculado (utilizando deleted_at nativo para bajas lógicas)
+			$user = User::create([
+				'client_id' => $client->id,
+				'role_id'   => $clientRole->id,
+				'name'      => $data['trade_name'] ?: $data['company_name'],
+				'email'     => strtolower(trim($data['contact_email'])),
+				'password'  => Hash::make($initialPassword),
+			]);
 
             return [
                 'client'           => $client,

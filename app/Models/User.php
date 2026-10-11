@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -45,4 +46,9 @@ class User extends Authenticatable
     {
         return !is_null($this->client_id) || $this->role?->name === 'client';
     }
+
+	public function psychologistSchedules(): HasMany
+	{
+		return $this->hasMany(PsychologistSchedule::class, 'user_id');
+	}
 }

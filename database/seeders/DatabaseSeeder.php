@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
 			SystemMenuSeeder::class,
+			BankAccountSeeder::class,
+			EvaluationTypeSeeder::class,
         ]);
     }
 }

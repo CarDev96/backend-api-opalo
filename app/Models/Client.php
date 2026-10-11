@@ -18,4 +18,9 @@ class Client extends Model
     {
         return $this->hasMany(User::class);
     }
+
+	public function examinees(): HasMany
+	{
+		return $this->hasMany(Examinee::class, 'client_id');
+	}
 }
