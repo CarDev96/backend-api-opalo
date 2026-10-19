@@ -14,12 +14,12 @@ class ClinicalAppointmentController extends Controller
     ) {}
 
     /**
-     * Listado de citas del especialista autenticado
+     * Listado de citas del especialista autenticado (Ruta oficial existente: /clinical/appointments/list)
      */
     public function index(Request $request): JsonResponse
     {
         $specialistId = $request->user()->id;
-        $timeframe = $request->query('timeframe', 'today');
+        $timeframe = $request->query('timeframe', 'all'); // Default 'all' para traer todo de inicio
 
         $appointments = $this->clinicalRepo->getAppointmentsBySpecialist($specialistId, $timeframe);
 
@@ -55,5 +55,19 @@ class ClinicalAppointmentController extends Controller
         $dashboardData = $this->clinicalRepo->getDashboardMetrics($specialistId);
 
         return response()->json($dashboardData);
+    }
+
+    /**
+     * MÉTODO NUEVO AGREGADO: Extracción limpia de todas las citas del especialista
+     */
+    public function listAllAppointments(Request $request): JsonResponse
+    {
+        $specialistId = $request->user()->id;
+        $appointments = $this->clinicalRepo->getAppointmentsBySpecialist($specialistId, 'all');
+
+        return response()->json([
+            'success' => true,
+            'data'    => $appointments,
+        ]);
     }
 }

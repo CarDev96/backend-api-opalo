@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\NotifyClientPsychometricTestStatusJob;
 use App\Models\Examinee;
 use App\Models\ExamineeDocument;
+use App\Models\ExamineePsychometricTest;
 use App\Repositories\ExamineeDossierRepository;
 use App\Services\FileUploaderService;
 use Illuminate\Http\JsonResponse;
@@ -144,6 +146,33 @@ class ExamineeDocumentController extends Controller
         return response()->json([
             'message'  => $request->status === 'approved' ? 'Documento aprobado.' : 'Documento rechazado.',
             'document' => $doc->fresh(),
+        ]);
+    }
+
+    /**
+     * Actualizar estatus de prueba psicométrica y encolar notificación al cliente
+     */
+    public function updatePsychometricStatus(Request $request, string $id): JsonResponse
+    {
+        $request->validate([
+            'status'           => 'required|in:approved,rejected',
+            'rejection_reason' => 'required_if:status,rejected|nullable|string|max:500',
+        ]);
+
+        $test = ExamineePsychometricTest::findOrFail($id);
+        $test->update([
+            'status'           => $request->status,
+            'rejection_reason' => $request->status === 'rejected' ? $request->rejection_reason : null,
+            'reviewed_by'      => $request->user()->id,
+            'reviewed_at'      => now(),
+        ]);
+
+        // Despachar Job para enviar correo al cliente
+        NotifyClientPsychometricTestStatusJob::dispatch($test->id);
+
+        return response()->json([
+            'message'  => $request->status === 'approved' ? 'Prueba psicométrica aprobada.' : 'Prueba psicométrica rechazada.',
+            'document' => $test->fresh(),
         ]);
     }
 

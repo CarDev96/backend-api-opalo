@@ -64,12 +64,14 @@ class ExamineeDossierRepository
     public function getDossiersForReview()
     {
         return Examinee::with([
-            'client:id,company_name,trade_name,rfc',
+            'client:id,company_name,trade_name,rfc,contact_email',
             'documents',
-            'references'
+            'references',
+            'psychometricTests.psychometricTest',
         ])
         ->whereHas('documents')
         ->orWhereHas('references')
+        ->orWhereHas('psychometricTests')
         ->orderBy('updated_at', 'desc')
         ->get();
     }

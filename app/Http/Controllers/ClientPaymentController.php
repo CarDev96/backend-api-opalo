@@ -13,17 +13,22 @@ class ClientPaymentController extends Controller
         private PaymentFileRepository $paymentFileRepo
     ) {}
 
-    public function getReceipts(Request $request): JsonResponse
+public function getReceipts(Request $request): JsonResponse
     {
         $clientId = $request->user()->client_id;
 
         if (!$clientId) {
-            return response()->json(['message' => 'Usuario sin empresa cliente asociada.'], 403);
+            return response()->json([
+                'message' => 'El usuario no tiene una empresa cliente vinculada.',
+                'data'    => [],
+            ], 403);
         }
 
         $receipts = $this->paymentFileRepo->getReceiptsByClient($clientId);
 
-        return response()->json($receipts);
+        return response()->json([
+            'data' => $receipts,
+        ]);
     }
 
     public function uploadReceipt(UploadPaymentReceiptRequest $request): JsonResponse
@@ -41,7 +46,7 @@ class ClientPaymentController extends Controller
         );
 
         return response()->json([
-            'message' => 'Comprobante recibido con éxito. En espera de validación.',
+            'message' => 'Comprobante recibido con éxito. En espera de validación administrativa.',
             'data'    => $paymentFile,
         ], 201);
     }

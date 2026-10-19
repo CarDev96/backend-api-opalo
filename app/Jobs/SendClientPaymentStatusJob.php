@@ -24,7 +24,13 @@ class SendClientPaymentStatusJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $this->paymentFile->loadMissing(['client', 'bankAccount']);
+            // Aseguramos que todas las relaciones necesarias para la plantilla estén presentes
+            $this->paymentFile->loadMissing([
+                'client',
+                'bankAccount',
+                'evaluationOrder.examinee',
+                'evaluationOrder.evaluationType',
+            ]);
 
             Mail::to($this->recipientEmail)->send(new PaymentReceiptStatusUpdatedMail($this->paymentFile));
 

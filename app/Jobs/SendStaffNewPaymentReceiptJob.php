@@ -24,8 +24,13 @@ class SendStaffNewPaymentReceiptJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            // Aseguramos que las relaciones vengan cargadas en el job
-            $this->paymentFile->loadMissing(['client', 'bankAccount']);
+            // Aseguramos que todas las relaciones vengan cargadas en el job
+            $this->paymentFile->loadMissing([
+                'client',
+                'bankAccount',
+                'evaluationOrder.examinee',
+                'evaluationOrder.evaluationType',
+            ]);
 
             Mail::to($this->recipientEmail)->send(new PaymentReceiptUploadedMail($this->paymentFile));
 

@@ -11,7 +11,7 @@ class ClinicalAppointmentRepository
     /**
      * Consulta las citas asignadas al especialista aplicando filtros de tiempo
      */
-    public function getAppointmentsBySpecialist(string $specialistId, string $timeframe = 'today'): Collection
+    public function getAppointmentsBySpecialist(string $specialistId, string $timeframe = 'all'): Collection
     {
         $query = Appointment::with([
                 'client',
@@ -26,9 +26,13 @@ class ClinicalAppointmentRepository
             $startOfWeek = Carbon::now()->startOfWeek()->toDateString();
             $endOfWeek   = Carbon::now()->endOfWeek()->toDateString();
             $query->whereBetween('date', [$startOfWeek, $endOfWeek]);
+        } elseif ($timeframe === 'upcoming') {
+            $query->whereDate('date', '>=', Carbon::today())
+                  ->where('status', 'scheduled');
         }
+        // Si es 'all', no aplica restricción de fechas para devolver el historial completo
 
-        return $query->orderBy('date', 'asc')
+        return $query->orderBy('date', 'desc')
             ->orderBy('start_time', 'asc')
             ->get();
     }

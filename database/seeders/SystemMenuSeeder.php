@@ -15,7 +15,9 @@ class SystemMenuSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Roles del Sistema
+        // =========================================================================
+        // 1. ROLES DEL SISTEMA (Todos con default_route => '/home')
+        // =========================================================================
         $adminRole = Role::firstOrCreate(
             ['name' => 'admin'],
             [
@@ -47,7 +49,7 @@ class SystemMenuSeeder extends Seeder
             ['name' => 'sales'],
             [
                 'display_name'  => 'Ventas',
-                'default_route' => '/clients',
+                'default_route' => '/home',
                 'description'   => 'Área comercial, prospección y altas de clientes',
             ]
         );
@@ -56,12 +58,18 @@ class SystemMenuSeeder extends Seeder
             ['name' => 'client'],
             [
                 'display_name'  => 'Portal Cliente',
-                'default_route' => '/portal/examinees',
+                'default_route' => '/home',
                 'description'   => 'Portal empresarial para solicitud y consulta de evaluaciones',
             ]
         );
 
-        // 2. Secciones del Menú (Ópalo Interno)
+        // Asegurar que todos tengan /home como default_route
+        Role::whereIn('name', ['admin', 'psychology', 'social_work', 'sales', 'client'])
+            ->update(['default_route' => '/home']);
+
+        // =========================================================================
+        // 2. SECCIONES DEL MENÚ (Ópalo Interno)
+        // =========================================================================
         $secGeneral = MenuSection::firstOrCreate(
             ['title' => 'General'],
             [
@@ -86,7 +94,9 @@ class SystemMenuSeeder extends Seeder
             ]
         );
 
-        // 3. Secciones del Menú (Portal Empresas)
+        // =========================================================================
+        // 3. SECCIONES DEL MENÚ (Portal Clientes / Empresas)
+        // =========================================================================
         $secClientOps = MenuSection::firstOrCreate(
             ['title' => 'Mis Evaluaciones'],
             [
@@ -103,38 +113,48 @@ class SystemMenuSeeder extends Seeder
             ]
         );
 
-        // 4. Módulos Internos Ópalo
-        $itemHome              = MenuItem::updateOrCreate(['route' => '/home'], ['menu_section_id' => $secGeneral->id, 'title' => 'Inicio', 'icon' => 'mdi-view-dashboard-outline', 'order_index' => 1]);
+        // =========================================================================
+        // 4. MÓDULOS INTERNOS ÓPALO (Admin, Psicología, Trabajo Social, Ventas)
+        // =========================================================================
+        $itemHome              = MenuItem::updateOrCreate(['route' => '/home'], ['menu_section_id' => $secGeneral->id, 'title' => 'Home', 'icon' => 'mdi-home-outline', 'order_index' => 1]);
         $itemClients           = MenuItem::updateOrCreate(['route' => '/clients'], ['menu_section_id' => $secGeneral->id, 'title' => 'Empresas Clientes', 'icon' => 'mdi-domain', 'order_index' => 2]);
         $itemExaminees         = MenuItem::updateOrCreate(['route' => '/examinees'], ['menu_section_id' => $secGeneral->id, 'title' => 'Evaluados', 'icon' => 'mdi-badge-account-horizontal-outline', 'order_index' => 3]);
 
-        // Citas para Especialistas (Psicología / Trabajo Social)
+        // Citas operativas para especialistas (Psicología / Trabajo Social)
         $itemSpecialistAppts   = MenuItem::updateOrCreate(['route' => '/appointments'], ['menu_section_id' => $secOperations->id, 'title' => 'Mi Agenda de Citas', 'icon' => 'mdi-calendar-clock-outline', 'order_index' => 1]);
-        // Programación de Citas exclusiva para Administración
-        $itemAdminAppts        = MenuItem::updateOrCreate(['route' => '/admin/appointments'], ['menu_section_id' => $secOperations->id, 'title' => 'Programar Citas', 'icon' => 'mdi-calendar-check', 'order_index' => 2]);
-        $itemTests             = MenuItem::updateOrCreate(['route' => '/tests'], ['menu_section_id' => $secOperations->id, 'title' => 'Catálogo de Pruebas', 'icon' => 'mdi-file-document-edit-outline', 'order_index' => 3]);
+        // Programación y asignación de Citas general
+        $itemAdminAppts        = MenuItem::updateOrCreate(['route' => '/admin/appointments'], ['menu_section_id' => $secOperations->id, 'title' => 'Citas', 'icon' => 'mdi-calendar-check', 'order_index' => 2]);
+        $itemTests             = MenuItem::updateOrCreate(['route' => '/admin/tests-catalog'], ['menu_section_id' => $secOperations->id, 'title' => 'Catálogo de Pruebas', 'icon' => 'mdi-file-document-edit-outline', 'order_index' => 3]);
         $itemPsychSchedules    = MenuItem::updateOrCreate(['route' => '/clinical/psychologists-schedules'], ['menu_section_id' => $secOperations->id, 'title' => 'Agenda de Psicólogos', 'icon' => 'mdi-calendar-account-outline', 'order_index' => 4]);
 
-        // NUEVO: Módulo para Validación de Expedientes (Trabajo Social y Admin)
+        // Validación de Expedientes (Trabajo Social, Psicología y Admin)
         $itemDossierReview     = MenuItem::updateOrCreate(['route' => '/social-work/dossiers'], ['menu_section_id' => $secOperations->id, 'title' => 'Validación de Expedientes', 'icon' => 'mdi-folder-check-outline', 'order_index' => 5]);
 
+        // Administración del Sistema
         $itemUsers             = MenuItem::updateOrCreate(['route' => '/users'], ['menu_section_id' => $secAdmin->id, 'title' => 'Usuarios del Sistema', 'icon' => 'mdi-account-multiple-outline', 'order_index' => 1]);
-        $itemPaymentValidation = MenuItem::updateOrCreate(['route' => '/admin/payment-receipts'], ['menu_section_id' => $secAdmin->id, 'title' => 'Validación de Pagos', 'icon' => 'mdi-cash-check', 'order_index' => 2]);
 
-        // 5. Módulos Portal Cliente
-        $itemMyExaminees  = MenuItem::updateOrCreate(['route' => '/portal/examinees'], ['menu_section_id' => $secClientOps->id, 'title' => 'Mis Evaluados', 'icon' => 'mdi-account-tie-outline', 'order_index' => 1]);
-        $itemTracking     = MenuItem::updateOrCreate(['route' => '/portal/tracking'], ['menu_section_id' => $secClientOps->id, 'title' => 'Avance y Estatus', 'icon' => 'mdi-progress-check', 'order_index' => 2]);
-        $itemFiscalData   = MenuItem::updateOrCreate(['route' => '/portal/fiscal-data'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Datos Fiscales (CSF)', 'icon' => 'mdi-file-pdf-box', 'order_index' => 1]);
-        $itemBankAccounts = MenuItem::updateOrCreate(['route' => '/portal/payment-methods'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Cuentas Bancarias', 'icon' => 'mdi-bank-outline', 'order_index' => 2]);
-        $itemReceipts     = MenuItem::updateOrCreate(['route' => '/portal/payment-receipts'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Comprobantes de Pago', 'icon' => 'mdi-file-upload-outline', 'order_index' => 3]);
+        // Módulo Unificado de Validación de Órdenes y Pagos para Staff
+        $itemOrdersValidation  = MenuItem::updateOrCreate(['route' => '/admin/orders-validation'], ['menu_section_id' => $secAdmin->id, 'title' => 'Órdenes y Citas', 'icon' => 'mdi-cash-check', 'order_index' => 2]);
 
-        // Eliminar del menú la ruta antigua del cliente
-        MenuItem::where('route', '/portal/appointments')->delete();
+        // =========================================================================
+        // 5. MÓDULOS PORTAL CLIENTE
+        // =========================================================================
+        $itemMyExaminees          = MenuItem::updateOrCreate(['route' => '/portal/examinees'], ['menu_section_id' => $secClientOps->id, 'title' => 'Mis Evaluados', 'icon' => 'mdi-account-tie-outline', 'order_index' => 1]);
+        $itemTracking             = MenuItem::updateOrCreate(['route' => '/portal/tracking'], ['menu_section_id' => $secClientOps->id, 'title' => 'Avance y Estatus', 'icon' => 'mdi-progress-check', 'order_index' => 2]);
+        $itemClientPsychometrics  = MenuItem::updateOrCreate(['route' => '/portal/psychometric-tests'], ['menu_section_id' => $secClientOps->id, 'title' => 'Pruebas Psicométricas', 'icon' => 'mdi-file-document-multiple-outline', 'order_index' => 3]);
 
-        // Limpiar accesos previos para reasignar ordenadamente
+        $itemCreateOrder          = MenuItem::updateOrCreate(['route' => '/portal/orders'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Generar Orden de Evaluación', 'icon' => 'mdi-cash-plus', 'order_index' => 1]);
+        $itemFiscalData           = MenuItem::updateOrCreate(['route' => '/portal/fiscal-data'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Datos Fiscales (CSF)', 'icon' => 'mdi-file-pdf-box', 'order_index' => 2]);
+        $itemBankAccounts         = MenuItem::updateOrCreate(['route' => '/portal/payment-methods'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Cuentas Bancarias', 'icon' => 'mdi-bank-outline', 'order_index' => 3]);
+
+        // Depurar rutas obsoletas o redundantes del menú
+        MenuItem::whereIn('route', ['/admin/payment-receipts', '/portal/appointments', '/portal/payment-receipts'])->delete();
+
+        // =========================================================================
+        // 6. ASIGNACIÓN DE ACCESOS Y PERMISOS POR ROL
+        // =========================================================================
         RoleMenuAccess::truncate();
 
-        // Helper de asignación
         $assign = function ($roleId, $itemId, $crud = 'C,R,U,D') {
             RoleMenuAccess::create([
                 'role_id'      => $roleId,
@@ -143,33 +163,55 @@ class SystemMenuSeeder extends Seeder
             ]);
         };
 
-        // 6. Asignación de Permisos por Rol
-        // Administrador: Acceso total incluyendo la validación de expedientes
-        foreach ([$itemHome, $itemUsers, $itemPaymentValidation, $itemClients, $itemExaminees, $itemAdminAppts, $itemTests, $itemPsychSchedules, $itemDossierReview] as $item) {
+        // Administrador: Control total de módulos institucionales y validación de órdenes
+        foreach ([
+            $itemHome,
+            $itemUsers,
+            $itemOrdersValidation,
+            $itemClients,
+            $itemAdminAppts,
+            $itemTests,
+            $itemPsychSchedules,
+            $itemDossierReview
+        ] as $item) {
             $assign($adminRole->id, $item->id, 'C,R,U,D,I,E,P');
         }
 
-        // Psicología: Inicio, Su Agenda de Citas (/appointments), Evaluados y Pruebas
-        foreach ([$itemHome, $itemSpecialistAppts, $itemExaminees, $itemTests] as $item) {
+        // 👉 Psicología: Se incluye $itemDossierReview para auditar expedientes y psicométricos
+        foreach ([
+            $itemHome,
+            $itemSpecialistAppts,
+            $itemTests,
+            $itemDossierReview
+        ] as $item) {
             $assign($psychologyRole->id, $item->id, 'C,R,U');
         }
 
-        // Trabajo Social: Inicio, Su Agenda de Citas (/appointments), Evaluados y NUEVA Validación de Expedientes
-        foreach ([$itemHome, $itemSpecialistAppts, $itemExaminees, $itemDossierReview] as $item) {
+        // Trabajo Social: Home, Agenda personal de citas, Evaluados y Expedientes
+        foreach ([$itemHome, $itemSpecialistAppts, $itemDossierReview] as $item) {
             $assign($socialWorkRole->id, $item->id, 'C,R,U');
         }
 
-        // Ventas: Clientes, Evaluados y Pagos
-        foreach ([$itemHome, $itemClients, $itemExaminees, $itemPaymentValidation] as $item) {
+        // Ventas: Home, Clientes, Evaluados y Revisión de Órdenes y Pagos
+        foreach ([$itemHome, $itemClients, $itemOrdersValidation] as $item) {
             $assign($salesRole->id, $item->id, 'C,R,U');
         }
 
-        // Portal Cliente: Registra candidatos, llena expediente, ve semáforo y sube comprobante de pago
-        foreach ([$itemMyExaminees, $itemTracking, $itemFiscalData, $itemBankAccounts, $itemReceipts] as $item) {
+        // Portal Cliente: Home, Mis Evaluados, Avance, Pruebas Psicométricas y Facturación
+        foreach ([
+            $itemHome,
+            $itemMyExaminees,
+            $itemClientPsychometrics,
+            $itemCreateOrder,
+            $itemFiscalData,
+            $itemBankAccounts
+        ] as $item) {
             $assign($clientRole->id, $item->id, 'C,R,U');
         }
 
-        // 7. Cuentas de Acceso Iniciales
+        // =========================================================================
+        // 7. CUENTAS DE ACCESO INICIALES (STAFF)
+        // =========================================================================
         User::firstOrCreate(
             ['email' => 'admin@opalo.com'],
             [
@@ -210,7 +252,6 @@ class SystemMenuSeeder extends Seeder
             ]
         );
 
-        // Cuenta demo para Trabajo Social
         User::firstOrCreate(
             ['email' => 'trabajosocial@opalo.com'],
             [
@@ -221,7 +262,9 @@ class SystemMenuSeeder extends Seeder
             ]
         );
 
-        // 8. Cliente Demo
+        // =========================================================================
+        // 8. CLIENTE DEMO Y USUARIO EMPRESARIAL
+        // =========================================================================
         $demoClient1 = Client::firstOrCreate(
             ['rfc' => 'LTN180512AB3'],
             [

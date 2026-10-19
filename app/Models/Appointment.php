@@ -22,10 +22,10 @@ class Appointment extends Model
         return $this->belongsTo(Client::class);
     }
 
-    public function examinee(): BelongsTo
-    {
-        return $this->belongsTo(Examinee::class);
-    }
+	public function examinee(): BelongsTo
+	{
+		return $this->belongsTo(Examinee::class, 'examinee_id');
+	}
 
     public function psychologist(): BelongsTo
     {

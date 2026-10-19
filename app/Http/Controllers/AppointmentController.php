@@ -2,35 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\BookAppointmentRequest;
+use App\Models\Appointment;
 use App\Repositories\AppointmentRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
-class AppointmentController extends Controller
+class AdminAppointmentController extends Controller
 {
     public function __construct(
         protected AppointmentRepository $appointmentRepo
     ) {}
 
-    /**
-     * Catálogos para el formulario de agendamiento
-     */
-    public function getFormData(Request $request): JsonResponse
+    public function formData(Request $request): JsonResponse
     {
         return response()->json([
+            'clients'          => $this->appointmentRepo->getClientsWithEligibleExaminees(),
             'evaluation_types' => $this->appointmentRepo->getActiveEvaluationTypes(),
             'psychologists'    => $this->appointmentRepo->getAvailablePsychologists(),
         ]);
     }
 
-    /**
-     * Consulta los horarios libres en tiempo real
-     */
-    public function getSlots(Request $request): JsonResponse
+    public function slots(Request $request): JsonResponse
     {
         $request->validate([
-            'psychologist_id' => 'required|uuid',
+            'psychologist_id' => 'required',
             'date'            => 'required|date',
         ]);
 
@@ -42,38 +38,52 @@ class AppointmentController extends Controller
         return response()->json($slots);
     }
 
-    /**
-     * Guarda la cita
-     */
-    public function store(BookAppointmentRequest $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $clientId = $request->user()->client_id;
+        $validated = $request->validate([
+            'client_id'          => 'required|exists:clients,id',
+            'examinee_id'        => 'required|exists:examinees,id',
+            'psychologist_id'    => 'required|exists:users,id',
+            'evaluation_type_id' => 'required|exists:evaluation_types,id',
+            'date'               => 'required|date',
+            'start_time'         => 'required',
+            'notes'              => 'nullable|string|max:500',
+        ]);
 
-        if (!$clientId) {
-            return response()->json(['message' => 'Usuario sin empresa asociada.'], 403);
-        }
-
-        $appointment = $this->appointmentRepo->bookAppointment($clientId, $request->validated());
+        $appointment = $this->appointmentRepo->bookAppointment($validated);
 
         return response()->json([
-            'message'     => 'Cita agendada exitosamente. Se ha notificado al especialista.',
+            'message'     => 'Cita agendada exitosamente.',
             'appointment' => $appointment,
         ], 201);
     }
 
-    /**
-     * Citas del cliente
-     */
-    public function index(Request $request): JsonResponse
+    public function dt(Request $request): JsonResponse
     {
-        $clientId = $request->user()->client_id;
+        $appointments = Appointment::with(['client', 'examinee', 'psychologist', 'evaluationType'])
+            ->latest('date')
+            ->get();
 
-        if (!$clientId) {
-            return response()->json(['message' => 'Usuario sin empresa asociada.'], 403);
-        }
+        return response()->json([
+            'data' => $appointments,
+        ]);
+    }
 
-        $appointments = $this->appointmentRepo->getClientAppointments($clientId);
+    public function cancel(Request $request, string $id): JsonResponse
+    {
+        $appointment = Appointment::with('examinee')->findOrFail($id);
 
-        return response()->json($appointments);
+        DB::transaction(function () use ($appointment) {
+            $appointment->update(['status' => 'cancelled']);
+
+            if ($appointment->examinee) {
+                $appointment->examinee->update(['status' => 'pending']);
+            }
+        });
+
+        return response()->json([
+            'message'     => 'Cita cancelada con éxito.',
+            'appointment' => $appointment->fresh(),
+        ]);
     }
 }

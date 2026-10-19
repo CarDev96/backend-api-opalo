@@ -38,41 +38,41 @@ class ClientController extends Controller
         ], 201);
     }
 
-	public function destroy(string $id)
-	{
-		$client = $this->clientRepository->getClientById($id);
-		$user = $this->userRepository->getUserByClientId($id);
+    public function destroy(string $id)
+    {
+        $client = $this->clientRepository->getClientById($id);
+        $user = $this->userRepository->getUserByClientId($id);
 
-		try {
-			$client?->delete();
-			$user?->delete();
-			return response()->json(['message' => 'Cliente eliminado con éxito.']);
-		} catch (\Exception $e) {
-			return response()->json(['message' => 'Error al eliminar el cliente.', 'error' => $e->getMessage()], 500);
-		}
-	}
+        try {
+            $client?->delete();
+            $user?->delete();
+            return response()->json(['message' => 'Cliente eliminado con éxito.']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al eliminar el cliente.', 'error' => $e->getMessage()], 500);
+        }
+    }
 
-	public function toggleStatus(string $id)
-	{
-		$client = $this->clientRepository->getAllClients()->find($id);
+    public function toggleStatus(string $id)
+    {
+        $client = $this->clientRepository->getClientById($id);
 
-		if (!$client) {
-			return response()->json(['message' => 'Cliente no encontrado.'], 404);
-		}
+        if (!$client) {
+            return response()->json(['message' => 'Cliente no encontrado.'], 404);
+        }
 
-		try {
-			$client->is_active = !$client->is_active;
-			$client->save();
+        try {
+            $client->is_active = !$client->is_active;
+            $client->save();
 
-			return response()->json([
-				'message' => 'Estado del cliente actualizado con éxito.',
-				'data'    => [
-					'client_id' => $client->id,
-					'is_active' => $client->is_active,
-				],
-			]);
-		} catch (\Exception $e) {
-			return response()->json(['message' => 'Error al actualizar el estado del cliente.', 'error' => $e->getMessage()], 500);
-		}
-	}
+            return response()->json([
+                'message' => 'Estado del cliente actualizado con éxito.',
+                'data'    => [
+                    'client_id' => $client->id,
+                    'is_active' => $client->is_active,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al actualizar el estado del cliente.', 'error' => $e->getMessage()], 500);
+        }
+    }
 }

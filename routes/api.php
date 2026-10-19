@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AdminAppointmentController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminEvaluationOrderController;
 use App\Http\Controllers\AdminPaymentReceiptController;
 use App\Http\Controllers\AppointmentController;
 use Illuminate\Http\Request;
@@ -12,7 +14,12 @@ use App\Http\Controllers\ExamineeController;
 use App\Http\Controllers\ExamineeDocumentController;
 use App\Http\Controllers\ExamineeReferenceController;
 use App\Http\Controllers\MenuSectionController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\BankAccountController;
+use App\Http\Controllers\ClientFiscalDocumentController;
+use App\Http\Controllers\EvaluationOrderController;
 use App\Http\Controllers\PsychologistScheduleController;
+use App\Http\Controllers\PsychometricTestController;
 use Illuminate\Support\Facades\Route;
 
 // Route::get('/user', function (Request $request) {
@@ -26,6 +33,23 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::get('/navigation', [MenuSectionController::class, 'navigation']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 
+	// Catálogo y Administración de Tipos de Evaluación
+	Route::get('/evaluation-types', [\App\Http\Controllers\EvaluationTypeController::class, 'index']);
+	Route::post('/evaluation-types', [\App\Http\Controllers\EvaluationTypeController::class, 'store']);
+	Route::get('/evaluation-types/{id}', [\App\Http\Controllers\EvaluationTypeController::class, 'show']);
+	Route::put('/evaluation-types/{id}', [\App\Http\Controllers\EvaluationTypeController::class, 'update']);
+	Route::delete('/evaluation-types/{id}', [\App\Http\Controllers\EvaluationTypeController::class, 'destroy']);
+	Route::patch('/evaluation-types/{id}/toggle-status', [\App\Http\Controllers\EvaluationTypeController::class, 'toggleStatus']);
+
+    // Órdenes de Evaluación y Comprobantes (Portal Cliente)
+    Route::get('/portal/evaluation-orders', [\App\Http\Controllers\EvaluationOrderController::class, 'index']);
+    Route::post('/portal/evaluation-orders', [\App\Http\Controllers\EvaluationOrderController::class, 'store']);
+    Route::post('/portal/evaluation-orders/{id}/receipt', [\App\Http\Controllers\EvaluationOrderController::class, 'uploadReceipt']);
+
+    // Validación de Pagos (Administración)
+    Route::get('/admin/evaluation-orders', [\App\Http\Controllers\EvaluationOrderController::class, 'adminOrdersIndex']);
+    Route::patch('/admin/evaluation-orders/{id}/status', [\App\Http\Controllers\EvaluationOrderController::class, 'updatePaymentStatus']);
+
 	// Admin Routes ---------------------------------------------
 	Route::middleware('role:admin, sales')->group(function () {
 		Route::get('/admin/payment-receipts', [AdminPaymentReceiptController::class, 'index']);
@@ -34,6 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	// Agenda de Psicólogos (Módulo de Configuración Clínica) ------
 	Route::middleware('role:admin')->group(function () {
+
+		Route::get('/admin/dashboard/stats', [AdminDashboardController::class, 'stats']);
+
 		Route::get('/admin/psychologists-schedules', [PsychologistScheduleController::class, 'index']);
 		Route::get('/admin/psychologists-schedules/{id}', [PsychologistScheduleController::class, 'getByPsychologist']);
 		Route::post('/admin/psychologists-schedules/{id}/sync', [PsychologistScheduleController::class, 'sync']);
@@ -44,10 +71,12 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::get('/form-data', [AdminAppointmentController::class, 'formData']);
 			Route::get('/slots', [AdminAppointmentController::class, 'slots']);
 			Route::post('/book', [AdminAppointmentController::class, 'store']);
-
+			Route::get('/eligible-examinees', [\App\Http\Controllers\AppointmentController::class, 'getEligibleExaminees']);
 			Route::get('/dt', [AdminAppointmentController::class, 'dt']);
 			Route::patch('/{id}/cancel', [AdminAppointmentController::class, 'cancel']);
 		});
+
+		// --------------------------------------------------------------
 
 	});
 	// -------------------------------------------------------------
@@ -57,6 +86,17 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/clinical/dashboard', [ClinicalAppointmentController::class, 'dashboard']);
 		Route::get('/clinical/appointments/list', [ClinicalAppointmentController::class, 'index']);
 		Route::patch('/clinical/appointments/{id}/session', [ClinicalAppointmentController::class, 'updateSession']);
+		Route::patch('/examinee-documents/{id}/status', [ExamineeDocumentController::class, 'updateStatus']);
+		Route::patch('/examinee-psychometric-tests/{id}/status', [ExamineeDocumentController::class, 'updatePsychometricStatus']);
+
+				// Catálogo de Pruebas Psicométricas (Administración)
+		Route::prefix('admin/psychometric-tests')->group(function () {
+			Route::get('/', [PsychometricTestController::class, 'index']);
+			Route::post('/', [PsychometricTestController::class, 'store']);
+			Route::post('/{id}', [PsychometricTestController::class, 'update']); // Usamos POST para compatibilidad con multipart FormData
+			Route::patch('/{id}/toggle-status', [PsychometricTestController::class, 'toggleStatus']);
+			Route::delete('/{id}', [PsychometricTestController::class, 'destroy']);
+		});
 	});
 	// -------------------------------------------------------------
 
@@ -81,6 +121,11 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::post('/clients/store', [ClientController::class, 'store']);
 		Route::delete('/clients/{id}', [ClientController::class, 'destroy']);
 		Route::post('/clients/{id}/toggle-status', [ClientController::class, 'toggleStatus']);
+
+	// Módulo Administrativo: Órdenes, Stream S3 y Validación
+		Route::get('/admin/evaluation-orders', [AdminEvaluationOrderController::class, 'index']);
+		Route::get('/admin/evaluation-orders/{id}/receipt/stream', [AdminEvaluationOrderController::class, 'streamReceipt']);
+		Route::post('/admin/evaluation-orders/{id}/validate-payment', [AdminEvaluationOrderController::class, 'validatePayment']);
 	});
 
 	// Examinees Routes ---------------------------------------------
@@ -96,6 +141,18 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/portal/appointments/list', [AppointmentController::class, 'index']);
 		Route::post('/portal/appointments/book', [AppointmentController::class, 'store']);
 		// -----------------------------------------------------------
+
+	// Módulo Datos Fiscales (Portal Cliente)
+		Route::get('/portal/fiscal-data', [\App\Http\Controllers\ClientFiscalDocumentController::class, 'show']);
+		Route::post('/portal/fiscal-data', [\App\Http\Controllers\ClientFiscalDocumentController::class, 'store']);
+
+		// Modulo de psicometricos bajar pruebas
+		Route::get('/portal/psychometric-tests', [\App\Http\Controllers\ClientPsychometricTestController::class, 'index']);
+
+		Route::prefix('portal/examinees/{examineeId}/psychometric-tests')->group(function () {
+			Route::get('/', [\App\Http\Controllers\ExamineePsychometricTestController::class, 'index']);
+			Route::post('/{testId}/upload', [\App\Http\Controllers\ExamineePsychometricTestController::class, 'upload']);
+		});
 	});
 
 	// --------------------------------------------------------------
@@ -115,7 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	// --------------------------------------------------------------
 
-	Route::middleware('role:admin,client')->group(function () {
+	Route::middleware('role:admin,client,psychology,social_work')->group(function () {
 		Route::get('/examinees/{examineeId}/documents', [ExamineeDocumentController::class, 'index']);
 		Route::post('/examinees/{examineeId}/documents', [ExamineeDocumentController::class, 'store']);
 		Route::patch('/examinee-documents/{id}/status', [ExamineeDocumentController::class, 'updateStatus']);

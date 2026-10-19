@@ -40,6 +40,7 @@ class AuthController extends Controller
 					'id' => $user->client->id,
 					'company_name' => $user->client->company_name,
 					'rfc' => $user->client->rfc,
+					'requires_purchase_order' => $user->client->requires_purchase_order,
 				] : null,
 			],
 		]);

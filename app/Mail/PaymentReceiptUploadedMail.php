@@ -24,7 +24,7 @@ class PaymentReceiptUploadedMail extends Mailable
             ?? 'Cliente';
 
         return new Envelope(
-            subject: "Nuevo Comprobante de Pago Reportado - {$clientName}",
+            subject: "Nuevo Comprobante de Pago Reportado - {$clientName} | Gcd Opalo certificaciones",
         );
     }
 
@@ -32,6 +32,14 @@ class PaymentReceiptUploadedMail extends Mailable
     {
         return new Content(
             view: 'mails.payments.receipt-uploaded',
+            with: [
+                'paymentFile'  => $this->paymentFile,
+                'client'       => $this->paymentFile->client,
+                'order'        => $this->paymentFile->evaluationOrder,
+                'examinee'     => $this->paymentFile->evaluationOrder?->examinee,
+                'evalType'     => $this->paymentFile->evaluationOrder?->evaluationType,
+                'bankAccount'  => $this->paymentFile->bankAccount,
+            ],
         );
     }
 
