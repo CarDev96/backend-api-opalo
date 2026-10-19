@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Client;
 use App\Models\MenuItem;
 use App\Models\MenuSection;
 use App\Models\Role;
@@ -177,7 +176,7 @@ class SystemMenuSeeder extends Seeder
             $assign($adminRole->id, $item->id, 'C,R,U,D,I,E,P');
         }
 
-        // 👉 Psicología: Se incluye $itemDossierReview para auditar expedientes y psicométricos
+        // Psicología: Home, Agenda personal, Catálogo de Pruebas y Validación de Expedientes
         foreach ([
             $itemHome,
             $itemSpecialistAppts,
@@ -210,80 +209,51 @@ class SystemMenuSeeder extends Seeder
         }
 
         // =========================================================================
-        // 7. CUENTAS DE ACCESO INICIALES (STAFF)
+        // 7. CUENTAS DE ACCESO DEL STAFF CON DATOS REALES
         // =========================================================================
-        User::firstOrCreate(
-            ['email' => 'admin@opalo.com'],
+
+        // Perfil de Administración
+        User::updateOrCreate(
+            ['email' => 'administracion@sistemaopalo.com.mx'],
             [
-                'name'      => 'Administrador Ópalo',
+                'name'      => 'Administrador General Ópalo',
                 'password'  => Hash::make('password'),
                 'role_id'   => $adminRole->id,
                 'client_id' => null,
             ]
         );
 
-        User::firstOrCreate(
-            ['email' => 'ventas@opalo.com'],
+        // Perfiles de Psicología
+        User::updateOrCreate(
+            ['email' => 'mayra.rodriguez@sistemaopalo.com.mx'],
             [
-                'name'      => 'Asesor Ventas Ópalo',
-                'password'  => Hash::make('password'),
-                'role_id'   => $salesRole->id,
-                'client_id' => null,
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'psicologia@opalo.com'],
-            [
-                'name'      => 'Lic. Mariana Vázquez Gómez',
+                'name'      => 'Lic. Mayra Rodriguez',
+                'phone'     => '3322482182',
                 'password'  => Hash::make('password'),
                 'role_id'   => $psychologyRole->id,
                 'client_id' => null,
             ]
         );
 
-        User::firstOrCreate(
-            ['email' => 'psicologia2@opalo.com'],
+        User::updateOrCreate(
+            ['email' => 'flor.morales@sistemaopalo.com.mx'],
             [
-                'name'      => 'Lic. Roberto Sánchez Ramos',
+                'name'      => 'Lic. Flor Morales',
+                'phone'     => '3322482259',
                 'password'  => Hash::make('password'),
                 'role_id'   => $psychologyRole->id,
                 'client_id' => null,
             ]
         );
 
-        User::firstOrCreate(
-            ['email' => 'trabajosocial@opalo.com'],
+        User::updateOrCreate(
+            ['email' => 'mariana.piottowsky@sistemaopalo.com.mx'],
             [
-                'name'      => 'Lic. Laura Elena Peña',
+                'name'      => 'Lic. Mariana Piottowsky',
+                'phone'     => '5513599872',
                 'password'  => Hash::make('password'),
-                'role_id'   => $socialWorkRole->id,
+                'role_id'   => $psychologyRole->id,
                 'client_id' => null,
-            ]
-        );
-
-        // =========================================================================
-        // 8. CLIENTE DEMO Y USUARIO EMPRESARIAL
-        // =========================================================================
-        $demoClient1 = Client::firstOrCreate(
-            ['rfc' => 'LTN180512AB3'],
-            [
-                'company_name'    => 'Logística y Transportes del Norte S.A. de C.V.',
-                'trade_name'      => 'TransNorte',
-                'contact_email'   => 'rh@transnorte.com',
-                'contact_phone'   => '3312345678',
-                'fiscal_regime'   => '601 - General de Ley Personas Morales',
-                'fiscal_zip_code' => '45100',
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'rh@transnorte.com'],
-            [
-                'name'      => 'Recursos Humanos TransNorte',
-                'password'  => Hash::make('password'),
-                'role_id'   => $clientRole->id,
-                'client_id' => $demoClient1->id,
             ]
         );
     }
