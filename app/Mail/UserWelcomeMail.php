@@ -35,7 +35,7 @@ class UserWelcomeMail extends Mailable
                 'user'          => $this->user,
                 'plainPassword' => $this->plainPassword,
                 'roleName'      => $this->user->role?->description ?? $this->user->role?->name ?? 'Colaborador',
-                'portalUrl'     => config('app.url') . '/login',
+                'portalUrl' => config('app.frontend_url') . '/login',
             ],
         );
     }
