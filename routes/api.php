@@ -65,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/admin/psychologists-schedules/{id}', [PsychologistScheduleController::class, 'getByPsychologist']);
 		Route::post('/admin/psychologists-schedules/{id}/sync', [PsychologistScheduleController::class, 'sync']);
 
-
+		Route::put('/clients/{id}', [App\Http\Controllers\ClientController::class, 'update']);
 		// Módulo de Agendamiento de Citas (Administración)
 		Route::prefix('admin/appointments')->group(function () {
 			Route::get('/form-data', [AdminAppointmentController::class, 'formData']);
@@ -107,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::middleware('role:admin')->group(function () {
 		Route::get('/users/dt', [\App\Http\Controllers\UserController::class, 'index']);
 		Route::post('/users/store', [\App\Http\Controllers\UserController::class, 'store']);
+		Route::put('/users/{id}', [App\Http\Controllers\UserController::class, 'update']);
 		Route::put('/user/password', [\App\Http\Controllers\UserController::class, 'changePassword']);
 		Route::delete('/users/{id}', [\App\Http\Controllers\UserController::class, 'destroy']);
 		Route::get('/users/roles', [\App\Http\Controllers\UserController::class, 'roles']);

@@ -90,6 +90,28 @@ class UserRepository
         return (bool) $user->delete();
     }
 
+	public function updateUser(string $id, array $data): User
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $user = User::withTrashed()->findOrFail($id);
+
+            // Si el rol nuevo no es psicología y no se especifica teléfono, se mantiene o limpia
+            $role = Role::find($data['role_id']);
+            $phone = ($role && $role->name === 'psychology')
+                ? ($data['phone'] ?? $user->phone)
+                : null;
+
+            $user->update([
+                'name'    => trim($data['name']),
+                'email'   => strtolower(trim($data['email'])),
+                'role_id' => $data['role_id'],
+                'phone'   => $phone,
+            ]);
+
+            return $user->fresh(['role', 'client']);
+        });
+    }
+
     public function getRolesWithoutClient(): Collection
     {
         return Role::whereNotIn('name', ['client'])

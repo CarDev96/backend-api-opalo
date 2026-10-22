@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 
@@ -44,6 +45,25 @@ class UserController extends Controller
                 'initial_password' => $result['plain_password'],
             ],
         ], 201);
+    }
+
+	public function update(UpdateUserRequest $request, string $id): JsonResponse
+    {
+        try {
+            $user = $this->userRepository->updateUser($id, $request->validated());
+
+            return response()->json([
+                'message' => 'Colaborador actualizado exitosamente.',
+                'data'    => $user,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Colaborador no encontrado.'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al actualizar el colaborador.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function changePassword(UpdatePasswordRequest $request): JsonResponse

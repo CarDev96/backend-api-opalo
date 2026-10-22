@@ -67,4 +67,30 @@ class ClientRepository
 
         return $result;
     }
+
+	public function updateClient(string $id, array $data): Client
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $client = Client::findOrFail($id);
+            $client->update($data);
+
+            // Sincronizar el nombre y email en el usuario vinculado si cambió el contacto
+            $user = User::where('client_id', $client->id)->first();
+            if ($user) {
+                $userUpdate = [];
+                if (!empty($data['contact_email'])) {
+                    $userUpdate['email'] = strtolower(trim($data['contact_email']));
+                }
+                if (!empty($data['trade_name']) || !empty($data['company_name'])) {
+                    $userUpdate['name'] = $data['trade_name'] ?: $data['company_name'];
+                }
+
+                if (!empty($userUpdate)) {
+                    $user->update($userUpdate);
+                }
+            }
+
+            return $client->fresh(['users', 'fiscalDocument']);
+        });
+    }
 }

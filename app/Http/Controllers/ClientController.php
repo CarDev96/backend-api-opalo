@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreClientRequest;
+use App\Http\Requests\UpdateClientRequest;
 use App\Repositories\ClientRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
@@ -73,6 +74,25 @@ class ClientController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error al actualizar el estado del cliente.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+	public function update(UpdateClientRequest $request, string $id): JsonResponse
+    {
+        try {
+            $client = $this->clientRepository->updateClient($id, $request->validated());
+
+            return response()->json([
+                'message' => 'Empresa cliente actualizada con éxito.',
+                'data'    => $client,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Cliente no encontrado.'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al actualizar el cliente.',
+                'error'   => $e->getMessage()
+            ], 500);
         }
     }
 }
