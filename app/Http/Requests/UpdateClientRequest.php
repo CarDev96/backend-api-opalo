@@ -25,7 +25,7 @@ class UpdateClientRequest extends FormRequest
                 'max:13',
                 Rule::unique('clients', 'rfc')->ignore($clientId),
             ],
-            'tax_regime'              => ['nullable', 'string', 'max:255'],
+            'fiscal_regime'           => ['nullable', 'string', 'max:255'],
             'contact_email'           => [
                 'required',
                 'email',
