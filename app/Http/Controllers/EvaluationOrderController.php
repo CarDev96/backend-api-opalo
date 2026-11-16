@@ -57,9 +57,9 @@ class EvaluationOrderController extends Controller
             'vat'                => $vat,
             'total'              => $total,
             'payment_status'     => 'pending_receipt',
+            'po_status'          => 'pending_po',
         ]);
 
-        // Avanzar estatus del evaluado a 'order_created' si estaba recién registrado
         if (in_array($examinee->status, ['pending', 'registered', null])) {
             $examinee->update(['status' => 'order_created']);
         }
@@ -68,6 +68,47 @@ class EvaluationOrderController extends Controller
             'message' => 'Orden de certificación generada exitosamente.',
             'order'   => $order->load(['examinee', 'evaluationType']),
         ], 201);
+    }
+
+    /**
+     * Sube o reemplaza la Orden de Compra (PO) previa al pago
+     */
+    public function uploadPurchaseOrder(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user();
+
+        $order = EvaluationOrder::where('id', $id)
+            ->where('client_id', $user->client_id)
+            ->firstOrFail();
+
+        $request->validate([
+            'file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:15360',
+        ]);
+
+        $uploaded = $request->file('file');
+
+        if ($order->po_file_path) {
+            $this->fileUploaderService->delete($order->po_file_path);
+        }
+
+        $uploadResult = $this->fileUploaderService->upload([
+            'file'          => $uploaded,
+            'root_folder'   => 'purchase-orders',
+            'subfolders'    => [$order->client_id, 'orders'],
+            'original_name' => $uploaded->getClientOriginalName(),
+        ]);
+
+        $order->update([
+            'po_file_path'        => $uploadResult['path'],
+            'po_original_name'    => $uploadResult['original_name'],
+            'po_status'           => 'po_under_review',
+            'po_rejection_reason' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Orden de Compra (PO) cargada con éxito. En espera de validación administrativa.',
+            'order'   => $order->fresh(['examinee', 'evaluationType']),
+        ]);
     }
 
     public function uploadReceipt(Request $request, string $id): JsonResponse
@@ -113,11 +154,10 @@ class EvaluationOrderController extends Controller
     public function adminOrdersIndex(): JsonResponse
     {
         $orders = EvaluationOrder::with([
-            'client:id,company_name,trade_name,rfc',
+            'client:id,company_name,trade_name,rfc,requires_purchase_order',
             'examinee:id,full_name,curp,status',
             'evaluationType:id,name,cost,modality',
         ])
-        ->whereNotNull('receipt_file_path')
         ->orderBy('updated_at', 'desc')
         ->get();
 

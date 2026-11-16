@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EvaluationOrder extends Model
@@ -23,7 +24,7 @@ class EvaluationOrder extends Model
         'reviewed_at' => 'datetime',
     ];
 
-    protected $appends = ['receipt_url'];
+    protected $appends = ['receipt_url', 'po_url'];
 
     public function getReceiptUrlAttribute(): ?string
     {
@@ -32,6 +33,15 @@ class EvaluationOrder extends Model
         }
 
         return app(FileUploaderService::class)->getTemporaryUrl($this->receipt_file_path, 45);
+    }
+
+    public function getPoUrlAttribute(): ?string
+    {
+        if (!$this->po_file_path) {
+            return null;
+        }
+
+        return app(FileUploaderService::class)->getTemporaryUrl($this->po_file_path, 45);
     }
 
     public function client(): BelongsTo
@@ -54,12 +64,12 @@ class EvaluationOrder extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
-	public function paymentFiles(): HasMany
+    public function paymentFiles(): HasMany
     {
-		return $this->hasMany(ClientPaymentFile::class, 'evaluation_order_id');
+        return $this->hasMany(ClientPaymentFile::class, 'evaluation_order_id');
     }
 
-	public function latestPaymentFile(): HasOne
+    public function latestPaymentFile(): HasOne
     {
         return $this->hasOne(ClientPaymentFile::class, 'evaluation_order_id')->latestOfMany();
     }

@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Órdenes de Evaluación y Comprobantes (Portal Cliente)
     Route::get('/portal/evaluation-orders', [\App\Http\Controllers\EvaluationOrderController::class, 'index']);
     Route::post('/portal/evaluation-orders', [\App\Http\Controllers\EvaluationOrderController::class, 'store']);
+    Route::post('/portal/evaluation-orders/{id}/po', [\App\Http\Controllers\EvaluationOrderController::class, 'uploadPurchaseOrder']);
     Route::post('/portal/evaluation-orders/{id}/receipt', [\App\Http\Controllers\EvaluationOrderController::class, 'uploadReceipt']);
 
     // Validación de Pagos (Administración)
@@ -97,10 +98,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/clients/{id}', [ClientController::class, 'destroy']);
         Route::post('/clients/{id}/toggle-status', [ClientController::class, 'toggleStatus']);
 
-        // Módulo Administrativo: Generación de Órdenes, Listado, Stream S3 y Validación
+        // Módulo Administrativo: Generación de Órdenes, Listado, Stream S3 y Validación PO/Pagos
         Route::get('/admin/evaluation-orders/form-data', [AdminEvaluationOrderController::class, 'formData']);
         Route::get('/admin/evaluation-orders', [AdminEvaluationOrderController::class, 'index']);
         Route::post('/admin/evaluation-orders', [AdminEvaluationOrderController::class, 'store']);
+        Route::post('/admin/evaluation-orders/{id}/validate-po', [AdminEvaluationOrderController::class, 'validatePurchaseOrder']);
         Route::post('/admin/evaluation-orders/{id}/receipt', [AdminEvaluationOrderController::class, 'uploadReceipt']);
         Route::get('/admin/evaluation-orders/{id}/receipt/stream', [AdminEvaluationOrderController::class, 'streamReceipt']);
         Route::post('/admin/evaluation-orders/{id}/validate-payment', [AdminEvaluationOrderController::class, 'validatePayment']);
@@ -158,7 +160,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/examinees/{examineeId}/documents', [ExamineeDocumentController::class, 'store']);
         Route::patch('/examinee-documents/{id}/status', [ExamineeDocumentController::class, 'updateStatus']);
         Route::delete('/examinee-documents/{id}', [ExamineeDocumentController::class, 'destroy']);
-
+		Route::post('/admin/evaluation-orders/{id}/po', [AdminEvaluationOrderController::class, 'uploadPurchaseOrder']);
         Route::get('/examinees/{examineeId}/references', [ExamineeReferenceController::class, 'index']);
         Route::post('/examinees/{examineeId}/references', [ExamineeReferenceController::class, 'store']);
 
