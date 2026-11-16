@@ -115,50 +115,47 @@ class SystemMenuSeeder extends Seeder
         // =========================================================================
         // 4. MÓDULOS INTERNOS ÓPALO (Admin, Psicología, Trabajo Social, Ventas)
         // =========================================================================
-        $itemHome             = MenuItem::updateOrCreate(['route' => '/home'], ['menu_section_id' =>$secGeneral->id, 'title' => 'Home', 'icon' => 'mdi-home-outline', 'order_index' => 1]);
-        $itemClients          = MenuItem::updateOrCreate(['route' => '/clients'], ['menu_section_id' =>$secGeneral->id, 'title' => 'Empresas Clientes', 'icon' => 'mdi-domain', 'order_index' => 2]);
-        $itemExaminees        = MenuItem::updateOrCreate(['route' => '/examinees'], ['menu_section_id' =>$secGeneral->id, 'title' => 'Evaluados', 'icon' => 'mdi-badge-account-horizontal-outline', 'order_index' => 3]);
+        $itemHome           = MenuItem::updateOrCreate(['route' => '/home'], ['menu_section_id' => $secGeneral->id, 'title' => 'Home', 'icon' => 'mdi-home-outline', 'order_index' => 1]);
+        $itemClients        = MenuItem::updateOrCreate(['route' => '/clients'], ['menu_section_id' => $secGeneral->id, 'title' => 'Empresas Clientes', 'icon' => 'mdi-domain', 'order_index' => 2]);
+        $itemExaminees      = MenuItem::updateOrCreate(['route' => '/examinees'], ['menu_section_id' => $secGeneral->id, 'title' => 'Evaluados', 'icon' => 'mdi-badge-account-horizontal-outline', 'order_index' => 3]);
 
         // Citas operativas para especialistas (Psicología / Trabajo Social)
-        $itemSpecialistAppts  = MenuItem::updateOrCreate(['route' => '/appointments'], ['menu_section_id' =>$secOperations->id, 'title' => 'Mi Agenda de Citas', 'icon' => 'mdi-calendar-clock-outline', 'order_index' => 1]);
+        $itemSpecialistAppts  = MenuItem::updateOrCreate(['route' => '/appointments'], ['menu_section_id' => $secOperations->id, 'title' => 'Mi Agenda de Citas', 'icon' => 'mdi-calendar-clock-outline', 'order_index' => 1]);
         // Programación y asignación de Citas general
-        $itemAdminAppts       = MenuItem::updateOrCreate(['route' => '/admin/appointments'], ['menu_section_id' =>$secOperations->id, 'title' => 'Citas', 'icon' => 'mdi-calendar-check', 'order_index' => 2]);
-        $itemTests            = MenuItem::updateOrCreate(['route' => '/admin/tests-catalog'], ['menu_section_id' =>$secOperations->id, 'title' => 'Catálogo de Pruebas', 'icon' => 'mdi-file-document-edit-outline', 'order_index' => 3]);
-        $itemPsychSchedules   = MenuItem::updateOrCreate(['route' => '/clinical/psychologists-schedules'], ['menu_section_id' =>$secOperations->id, 'title' => 'Agenda de Psicólogos', 'icon' => 'mdi-calendar-account-outline', 'order_index' => 4]);
+        $itemAdminAppts       = MenuItem::updateOrCreate(['route' => '/admin/appointments'], ['menu_section_id' => $secOperations->id, 'title' => 'Citas', 'icon' => 'mdi-calendar-check', 'order_index' => 2]);
+        $itemTests            = MenuItem::updateOrCreate(['route' => '/admin/tests-catalog'], ['menu_section_id' => $secOperations->id, 'title' => 'Catálogo de Pruebas', 'icon' => 'mdi-file-document-edit-outline', 'order_index' => 3]);
+        $itemPsychSchedules   = MenuItem::updateOrCreate(['route' => '/clinical/psychologists-schedules'], ['menu_section_id' => $secOperations->id, 'title' => 'Agenda de Psicólogos', 'icon' => 'mdi-calendar-account-outline', 'order_index' => 4]);
 
         // Validación de Expedientes (Trabajo Social, Psicología y Admin)
-        $itemDossierReview    = MenuItem::updateOrCreate(['route' => '/social-work/dossiers'], ['menu_section_id' =>$secOperations->id, 'title' => 'Validación de Expedientes', 'icon' => 'mdi-folder-check-outline', 'order_index' => 5]);
+        $itemDossierReview    = MenuItem::updateOrCreate(['route' => '/social-work/dossiers'], ['menu_section_id' => $secOperations->id, 'title' => 'Validación de Expedientes', 'icon' => 'mdi-folder-check-outline', 'order_index' => 5]);
 
         // Administración del Sistema
-        $itemUsers            = MenuItem::updateOrCreate(['route' => '/users'], ['menu_section_id' =>$secAdmin->id, 'title' => 'Usuarios del Sistema', 'icon' => 'mdi-account-multiple-outline', 'order_index' => 1]);
+        $itemUsers            = MenuItem::updateOrCreate(['route' => '/users'], ['menu_section_id' => $secAdmin->id, 'title' => 'Usuarios del Sistema', 'icon' => 'mdi-account-multiple-outline', 'order_index' => 1]);
 
         // Generación de Órdenes de Evaluación para Admin y Ventas
-        $itemAdminCreateOrder = MenuItem::updateOrCreate(['route' => '/admin/orders'], ['menu_section_id' =>$secAdmin->id, 'title' => 'Generar Orden de Evaluación', 'icon' => 'mdi-cash-plus', 'order_index' => 2]);
-
-        // Módulo Unificado de Validación de Órdenes y Pagos para Staff
-        $itemOrdersValidation = MenuItem::updateOrCreate(['route' => '/admin/orders-validation'], ['menu_section_id' =>$secAdmin->id, 'title' => 'Órdenes y Citas', 'icon' => 'mdi-cash-check', 'order_index' => 3]);
+        $itemAdminCreateOrder = MenuItem::updateOrCreate(['route' => '/admin/orders'], ['menu_section_id' => $secAdmin->id, 'title' => 'Generar Orden de Evaluación', 'icon' => 'mdi-cash-plus', 'order_index' => 2]);
 
         // =========================================================================
         // 5. MÓDULOS PORTAL CLIENTE
         // =========================================================================
-        $itemMyExaminees         = MenuItem::updateOrCreate(['route' => '/portal/examinees'], ['menu_section_id' =>$secClientOps->id, 'title' => 'Mis Evaluados', 'icon' => 'mdi-account-tie-outline', 'order_index' => 1]);
-        $itemTracking            = MenuItem::updateOrCreate(['route' => '/portal/tracking'], ['menu_section_id' =>$secClientOps->id, 'title' => 'Avance y Estatus', 'icon' => 'mdi-progress-check', 'order_index' => 2]);
-        $itemClientPsychometrics = MenuItem::updateOrCreate(['route' => '/portal/psychometric-tests'], ['menu_section_id' =>$secClientOps->id, 'title' => 'Pruebas Psicométricas', 'icon' => 'mdi-file-document-multiple-outline', 'order_index' => 3]);
-        $itemValidateCerts       = MenuItem::updateOrCreate(['route' => 'https://www.opalosoft.app/web/login'], ['menu_section_id' =>$secClientOps->id, 'title' => 'Validar Certificados', 'icon' => 'mdi-certificate-outline', 'order_index' => 4]);
+        $itemMyExaminees         = MenuItem::updateOrCreate(['route' => '/portal/examinees'], ['menu_section_id' => $secClientOps->id, 'title' => 'Mis Evaluados', 'icon' => 'mdi-account-tie-outline', 'order_index' => 1]);
+        $itemTracking            = MenuItem::updateOrCreate(['route' => '/portal/tracking'], ['menu_section_id' => $secClientOps->id, 'title' => 'Avance y Estatus', 'icon' => 'mdi-progress-check', 'order_index' => 2]);
+        $itemClientPsychometrics = MenuItem::updateOrCreate(['route' => '/portal/psychometric-tests'], ['menu_section_id' => $secClientOps->id, 'title' => 'Pruebas Psicométricas', 'icon' => 'mdi-file-document-multiple-outline', 'order_index' => 3]);
+        $itemValidateCerts       = MenuItem::updateOrCreate(['route' => 'https://www.opalosoft.app/web/login'], ['menu_section_id' => $secClientOps->id, 'title' => 'Validar Certificados', 'icon' => 'mdi-certificate-outline', 'order_index' => 4]);
 
-        $itemCreateOrder         = MenuItem::updateOrCreate(['route' => '/portal/orders'], ['menu_section_id' =>$secClientBilling->id, 'title' => 'Generar Orden de Evaluación', 'icon' => 'mdi-cash-plus', 'order_index' => 1]);
-        $itemFiscalData          = MenuItem::updateOrCreate(['route' => '/portal/fiscal-data'], ['menu_section_id' =>$secClientBilling->id, 'title' => 'Datos Fiscales (CSF)', 'icon' => 'mdi-file-pdf-box', 'order_index' => 2]);
-        $itemBankAccounts        = MenuItem::updateOrCreate(['route' => '/portal/payment-methods'], ['menu_section_id' =>$secClientBilling->id, 'title' => 'Cuentas Bancarias', 'icon' => 'mdi-bank-outline', 'order_index' => 3]);
+        $itemCreateOrder         = MenuItem::updateOrCreate(['route' => '/portal/orders'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Generar Orden de Evaluación', 'icon' => 'mdi-cash-plus', 'order_index' => 1]);
+        $itemFiscalData          = MenuItem::updateOrCreate(['route' => '/portal/fiscal-data'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Datos Fiscales (CSF)', 'icon' => 'mdi-file-pdf-box', 'order_index' => 2]);
+        $itemBankAccounts        = MenuItem::updateOrCreate(['route' => '/portal/payment-methods'], ['menu_section_id' => $secClientBilling->id, 'title' => 'Cuentas Bancarias', 'icon' => 'mdi-bank-outline', 'order_index' => 3]);
 
-        // Depurar rutas obsoletas o redundantes del menú
-        MenuItem::whereIn('route', ['/admin/payment-receipts', '/portal/appointments', '/portal/payment-receipts'])->delete();
+        // Depurar rutas obsoletas o redundantes del menú (incluyendo la antigua vista de órdenes y citas general)
+        MenuItem::whereIn('route', ['/admin/payment-receipts', '/portal/appointments', '/portal/payment-receipts', '/admin/orders-validation'])->delete();
 
         // =========================================================================
         // 6. ASIGNACIÓN DE ACCESOS Y PERMISOS POR ROL
         // =========================================================================
         RoleMenuAccess::truncate();
 
-        $assign = function ($roleId, $itemId,$crud = 'C,R,U,D') {
+        $assign = function ($roleId, $itemId, $crud = 'C,R,U,D') {
             RoleMenuAccess::create([
                 'role_id'      => $roleId,
                 'menu_item_id' => $itemId,
@@ -166,41 +163,55 @@ class SystemMenuSeeder extends Seeder
             ]);
         };
 
-        // Administrador: Control total de módulos institucionales, generación y validación de órdenes
+        // Administrador: Control total sin el menú redundante de órdenes y citas
         foreach ([
             $itemHome,
-            $itemUsers,$itemAdminCreateOrder,
-            $itemOrdersValidation,$itemClients,
-            $itemAdminAppts,$itemTests,
-            $itemPsychSchedules,$itemDossierReview
-        ] as $item) {$assign($adminRole->id,$item->id, 'C,R,U,D,I,E,P');
+            $itemUsers,
+            $itemAdminCreateOrder,
+            $itemClients,
+            $itemAdminAppts,
+            $itemTests,
+            $itemPsychSchedules,
+            $itemDossierReview
+        ] as $item) {
+            $assign($adminRole->id, $item->id, 'C,R,U,D,I,E,P');
         }
 
         // Psicología: Home, Agenda personal, Catálogo de Pruebas y Validación de Expedientes
         foreach ([
-            $itemHome,$itemSpecialistAppts,
-            $itemTests,$itemDossierReview
-        ] as $item) {$assign($psychologyRole->id,$item->id, 'C,R,U');
+            $itemHome,
+            $itemSpecialistAppts,
+            $itemTests,
+            $itemDossierReview
+        ] as $item) {
+            $assign($psychologyRole->id, $item->id, 'C,R,U');
         }
 
         // Trabajo Social: Home, Agenda personal de citas, Evaluados y Expedientes
-        foreach ([$itemHome, $itemSpecialistAppts,$itemDossierReview] as $item) {$assign($socialWorkRole->id,$item->id, 'C,R,U');
+        foreach ([$itemHome, $itemSpecialistAppts, $itemDossierReview] as $item) {
+            $assign($socialWorkRole->id, $item->id, 'C,R,U');
         }
 
-        // Ventas: Home, Clientes, Generar Orden de Evaluación y Revisión de Órdenes y Pagos
+        // Ventas: Home, Clientes y Generar Orden de Evaluación (sin órdenes y citas)
         foreach ([
-            $itemHome,$itemClients,
-            $itemAdminCreateOrder,$itemOrdersValidation
-        ] as $item) {$assign($salesRole->id,$item->id, 'C,R,U');
+            $itemHome,
+            $itemClients,
+            $itemAdminCreateOrder
+        ] as $item) {
+            $assign($salesRole->id, $item->id, 'C,R,U');
         }
 
         // Portal Cliente: Home, Mis Evaluados, Pruebas Psicométricas, Validar Certificados y Facturación
         foreach ([
             $itemHome,
-            $itemMyExaminees,$itemClientPsychometrics,
-            $itemValidateCerts,$itemCreateOrder,
-            $itemFiscalData,$itemBankAccounts
-        ] as $item) {$assign($clientRole->id,$item->id, 'C,R,U');
+            $itemMyExaminees,
+            $itemClientPsychometrics,
+            $itemValidateCerts,
+            $itemCreateOrder,
+            $itemFiscalData,
+            $itemBankAccounts
+        ] as $item) {
+            $assign($clientRole->id, $item->id, 'C,R,U');
         }
 
         // =========================================================================
