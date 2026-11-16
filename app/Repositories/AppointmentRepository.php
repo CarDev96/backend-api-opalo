@@ -170,4 +170,28 @@ class AppointmentRepository
             ->latest('date')
             ->get();
     }
+
+/**
+     * Obtiene los clientes activos con evaluados elegibles para agendar cita.
+     */
+    public function getClientsWithEligibleExaminees()
+    {
+        // Si el modelo Client tiene la relación examinees o candidates:
+        return \App\Models\Client::where('is_active', true)
+            ->when(method_exists(\App\Models\Client::class, 'examinees'), function ($query) {
+                $query->with(['examinees' => function ($q) {
+                    // Filtrar si tienes un estatus tipo pendiente o sin cita
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('examinees', 'status')) {
+                        $q->whereIn('status', ['pending', 'registered', 'sin_cita']);
+                    }
+                }]);
+            }, function ($query) {
+                // Fallback si la relación se llama candidates
+                if (method_exists(\App\Models\Client::class, 'candidates')) {
+                    $query->with('candidates');
+                }
+            })
+            ->orderBy('company_name', 'asc')
+            ->get();
+    }
 }
