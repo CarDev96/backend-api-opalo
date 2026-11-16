@@ -89,6 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/user/password', [\App\Http\Controllers\UserController::class, 'changePassword']);
         Route::delete('/users/{id}', [\App\Http\Controllers\UserController::class, 'destroy']);
         Route::get('/users/roles', [\App\Http\Controllers\UserController::class, 'roles']);
+		Route::post('/clients/{id}/reset-password', [ClientController::class, 'resetPassword']);
+		Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword']);
     });
 
     // Clients, Orders & Appointments Routes (Admin y Ventas) -------

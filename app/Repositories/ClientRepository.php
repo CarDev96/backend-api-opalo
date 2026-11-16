@@ -9,6 +9,7 @@ use App\Services\SendEmailService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Exception;
 
 class ClientRepository
@@ -42,7 +43,7 @@ class ClientRepository
             // 3. Contraseña inicial basada en su RFC
             $initialPassword = strtoupper(trim($data['rfc']));
 
-            // 4. Crear usuario vinculado (utilizando deleted_at nativo para bajas lógicas)
+            // 4. Crear usuario vinculado
             $user = User::create([
                 'client_id' => $client->id,
                 'role_id'   => $clientRole->id,
@@ -68,7 +69,7 @@ class ClientRepository
         return $result;
     }
 
-	public function updateClient(string $id, array $data): Client
+    public function updateClient(string $id, array $data): Client
     {
         return DB::transaction(function () use ($id, $data) {
             $client = Client::findOrFail($id);
@@ -92,5 +93,28 @@ class ClientRepository
 
             return $client->fresh(['users', 'fiscalDocument']);
         });
+    }
+
+    public function resetClientPassword(string $id): array
+    {
+        $client = Client::findOrFail($id);
+        $user = User::where('client_id', $client->id)->first();
+
+        if (!$user) {
+            throw new Exception('No se encontró un usuario vinculado a esta empresa cliente.');
+        }
+
+        $temporaryPassword = 'OPALO-' . strtoupper(Str::random(6));
+
+        $user->update([
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        $this->emailService->sendClientPasswordReset($client, $user, $temporaryPassword);
+
+        return [
+            'email'              => $user->email,
+            'temporary_password' => $temporaryPassword,
+        ];
     }
 }

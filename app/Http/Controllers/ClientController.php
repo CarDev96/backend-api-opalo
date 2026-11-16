@@ -77,7 +77,7 @@ class ClientController extends Controller
         }
     }
 
-	public function update(UpdateClientRequest $request, string $id): JsonResponse
+    public function update(UpdateClientRequest $request, string $id): JsonResponse
     {
         try {
             $client = $this->clientRepository->updateClient($id, $request->validated());
@@ -93,6 +93,24 @@ class ClientController extends Controller
                 'message' => 'Error al actualizar el cliente.',
                 'error'   => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function resetPassword(string $id): JsonResponse
+    {
+        try {
+            $result = $this->clientRepository->resetClientPassword($id);
+
+            return response()->json([
+                'message' => "Contraseña restablecida y enviada al correo ({$result['email']}).",
+                'data'    => $result,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Cliente no encontrado.'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Error al restablecer la contraseña.',
+            ], 422);
         }
     }
 }

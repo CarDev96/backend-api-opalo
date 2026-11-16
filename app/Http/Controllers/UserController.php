@@ -86,4 +86,22 @@ class UserController extends Controller
             'message' => 'Colaborador dado de baja del sistema.',
         ]);
     }
+
+	public function resetPassword(string $id): JsonResponse
+    {
+        try {
+            $result = $this->userRepository->resetUserPassword($id);
+
+            return response()->json([
+                'message' => "Contraseña restablecida y enviada al correo ({$result['email']}).",
+                'data'    => $result,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Colaborador no encontrado.'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Error al restablecer la contraseña.',
+            ], 422);
+        }
+    }
 }

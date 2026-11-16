@@ -38,12 +38,10 @@ class UserRepository
 
     public function createUser(array $data): array
     {
-        // Si no mandaron contraseña manual, autogeneramos una temporal limpia de 10 caracteres
         $plainPassword = !empty($data['password'])
             ? $data['password']
             : Str::random(10);
 
-        // Determinamos el teléfono: solo se guarda si el rol es psicología o si viene presente
         $role = Role::find($data['role_id']);
         $phone = ($role && $role->name === 'psychology')
             ? ($data['phone'] ?? null)
@@ -60,10 +58,8 @@ class UserRepository
             ]);
         });
 
-        // Recargamos el rol asociado
         $user->load('role');
 
-        // Envío asíncrono de credenciales por SendEmailService
         $this->emailService->sendUserWelcomeCredentials($user, $plainPassword);
 
         return [
@@ -79,6 +75,24 @@ class UserRepository
         ]);
     }
 
+    public function resetUserPassword(string $id): array
+    {
+        $user = User::withTrashed()->findOrFail($id);
+
+        $temporaryPassword = 'OPALO-' . strtoupper(Str::random(6));
+
+        $user->update([
+            'password' => Hash::make($temporaryPassword),
+        ]);
+
+        $this->emailService->sendUserPasswordReset($user, $temporaryPassword);
+
+        return [
+            'email'              => $user->email,
+            'temporary_password' => $temporaryPassword,
+        ];
+    }
+
     public function toggleStatus(string $id): bool
     {
         $user = User::withTrashed()->findOrFail($id);
@@ -90,12 +104,11 @@ class UserRepository
         return (bool) $user->delete();
     }
 
-	public function updateUser(string $id, array $data): User
+    public function updateUser(string $id, array $data): User
     {
         return DB::transaction(function () use ($id, $data) {
             $user = User::withTrashed()->findOrFail($id);
 
-            // Si el rol nuevo no es psicología y no se especifica teléfono, se mantiene o limpia
             $role = Role::find($data['role_id']);
             $phone = ($role && $role->name === 'psychology')
                 ? ($data['phone'] ?? $user->phone)

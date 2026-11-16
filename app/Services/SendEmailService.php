@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Jobs\SendAppointmentBookedEmailJob;
+use App\Jobs\SendClientPasswordResetJob;
 use App\Jobs\SendClientPaymentStatusJob;
 use App\Jobs\SendClientWelcomeEmailJob;
 use App\Jobs\SendStaffNewPaymentReceiptJob;
+use App\Jobs\SendUserPasswordResetJob;
 use App\Jobs\SendUserWelcomeEmailJob;
 use App\Models\Appointment;
 use App\Models\Client;
@@ -25,6 +27,14 @@ class SendEmailService
     }
 
     /**
+     * Encola el correo de restablecimiento de contraseña temporal para un cliente.
+     */
+    public function sendClientPasswordReset(Client $client, User $user, string $plainPassword): void
+    {
+        SendClientPasswordResetJob::dispatch($client, $user, $plainPassword);
+    }
+
+    /**
      * Encola el correo de bienvenida para un usuario interno del staff.
      */
     public function sendUserWelcomeCredentials(User $user, string $plainPassword): void
@@ -34,7 +44,6 @@ class SendEmailService
 
     /**
      * Despacha el job para notificar al staff sobre un nuevo comprobante subido por el cliente.
-     * Envía la notificación a los usuarios administradores y de trabajo social.
      */
     public function notifyStaffNewPaymentReceipt(ClientPaymentFile $paymentFile): void
     {
@@ -77,14 +86,20 @@ class SendEmailService
     {
         $appointment->loadMissing(['client', 'psychologist']);
 
-        // 1. Notificar a la empresa cliente
         if ($appointment->client?->contact_email) {
             SendAppointmentBookedEmailJob::dispatch($appointment, $appointment->client->contact_email);
         }
 
-        // 2. Notificar al especialista asignado (psicóloga o trabajadora social)
         if ($appointment->psychologist?->email) {
             SendAppointmentBookedEmailJob::dispatch($appointment, $appointment->psychologist->email);
         }
+    }
+
+	/**
+     * Encola el correo de restablecimiento de contraseña temporal para un usuario interno del staff.
+     */
+    public function sendUserPasswordReset(User $user, string $plainPassword): void
+    {
+        SendUserPasswordResetJob::dispatch($user, $plainPassword);
     }
 }
