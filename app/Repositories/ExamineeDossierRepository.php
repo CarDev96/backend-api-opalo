@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Models\Examinee;
 use App\Models\ExamineeDocument;
 use App\Models\ExamineeReference;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ExamineeDossierRepository
@@ -61,6 +60,10 @@ class ExamineeDossierRepository
         });
     }
 
+    /**
+     * Retorna TODOS los evaluados para seguimiento y auditoría integral,
+     * incluso si todavía no han subido documentos o referencias.
+     */
     public function getDossiersForReview()
     {
         return Examinee::with([
@@ -69,10 +72,7 @@ class ExamineeDossierRepository
             'references',
             'psychometricTests.psychometricTest',
         ])
-        ->whereHas('documents')
-        ->orWhereHas('references')
-        ->orWhereHas('psychometricTests')
-        ->orderBy('updated_at', 'desc')
+        ->orderBy('created_at', 'desc')
         ->get();
     }
 }

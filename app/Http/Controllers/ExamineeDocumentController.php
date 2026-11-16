@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\NotifyClientPsychometricTestStatusJob;
+use App\Jobs\SendMissingDossierReminderJob;
 use App\Models\Examinee;
 use App\Models\ExamineeDocument;
 use App\Models\ExamineePsychometricTest;
+use App\Models\User;
 use App\Repositories\ExamineeDossierRepository;
 use App\Services\FileUploaderService;
 use Illuminate\Http\JsonResponse;
@@ -55,7 +57,6 @@ class ExamineeDocumentController extends Controller
         $type = $request->document_type;
         $uploadedFile = $request->file('file');
 
-        // Subir archivo mediante FileUploaderService
         $uploadResult = $this->fileUploaderService->upload([
             'file'          => $uploadedFile,
             'root_folder'   => 'examinees',
@@ -63,7 +64,6 @@ class ExamineeDocumentController extends Controller
             'original_name' => $uploadedFile->getClientOriginalName(),
         ]);
 
-        // 👉 Si es carta laboral, SIEMPRE se crea una nueva entrada
         if ($type === 'labor_letters') {
             $document = ExamineeDocument::create([
                 'examinee_id'      => $examinee->id,
@@ -82,7 +82,6 @@ class ExamineeDocumentController extends Controller
             ], 201);
         }
 
-        // Para el resto de documentos (1 archivo por slot): buscar y reemplazar si ya existía
         $existing = ExamineeDocument::where('examinee_id', $examinee->id)
             ->where('document_type', $type)
             ->first();
@@ -111,9 +110,6 @@ class ExamineeDocumentController extends Controller
         ], 201);
     }
 
-    /**
-     * Eliminar un archivo específico (ej. carta laboral errónea)
-     */
     public function destroy(Request $request, string $id): JsonResponse
     {
         $doc = ExamineeDocument::findOrFail($id);
@@ -149,9 +145,6 @@ class ExamineeDocumentController extends Controller
         ]);
     }
 
-    /**
-     * Actualizar estatus de prueba psicométrica y encolar notificación al cliente
-     */
     public function updatePsychometricStatus(Request $request, string $id): JsonResponse
     {
         $request->validate([
@@ -167,7 +160,6 @@ class ExamineeDocumentController extends Controller
             'reviewed_at'      => now(),
         ]);
 
-        // Despachar Job para enviar correo al cliente
         NotifyClientPsychometricTestStatusJob::dispatch($test->id);
 
         return response()->json([
@@ -180,6 +172,47 @@ class ExamineeDocumentController extends Controller
     {
         $dossiers = $this->dossierRepo->getDossiersForReview();
         return response()->json($dossiers);
+    }
+
+    /**
+     * Marca la evaluación del candidato como Terminada (veredicto enviado) y registra el cierre
+     */
+    public function completeEvaluation(string $examineeId): JsonResponse
+    {
+        $examinee = Examinee::findOrFail($examineeId);
+
+        $examinee->update([
+            'status'       => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        return response()->json([
+            'message'  => 'Evaluación marcada como Terminada exitosamente.',
+            'examinee' => $examinee->fresh('client'),
+        ]);
+    }
+
+    /**
+     * Encola correo de recordatorio al cliente cuando faltan documentos o referencias
+     */
+    public function sendDossierReminder(string $examineeId): JsonResponse
+    {
+        $examinee = Examinee::with('client')->findOrFail($examineeId);
+
+        $hasClientEmail = !empty($examinee->client?->contact_email)
+            || User::where('client_id', $examinee->client_id)->whereNotNull('email')->exists();
+
+        if (!$hasClientEmail) {
+            return response()->json([
+                'message' => 'La empresa cliente no tiene un correo electrónico registrado para recibir notificaciones.',
+            ], 422);
+        }
+
+        SendMissingDossierReminderJob::dispatch($examinee->id);
+
+        return response()->json([
+            'message' => 'Recordatorio de documentación encolado y enviado por correo al cliente.',
+        ]);
     }
 
     private function authorizeExaminee(Request $request, string $examineeId): Examinee

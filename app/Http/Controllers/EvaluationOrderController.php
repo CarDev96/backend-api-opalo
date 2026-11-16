@@ -20,7 +20,7 @@ class EvaluationOrderController extends Controller
         $user = $request->user();
 
         $orders = EvaluationOrder::with([
-            'examinee:id,full_name,curp,position',
+            'examinee:id,full_name,curp,position,status',
             'evaluationType:id,name,cost,modality',
         ])
         ->where('client_id', $user->client_id)
@@ -58,6 +58,11 @@ class EvaluationOrderController extends Controller
             'total'              => $total,
             'payment_status'     => 'pending_receipt',
         ]);
+
+        // Avanzar estatus del evaluado a 'order_created' si estaba recién registrado
+        if (in_array($examinee->status, ['pending', 'registered', null])) {
+            $examinee->update(['status' => 'order_created']);
+        }
 
         return response()->json([
             'message' => 'Orden de certificación generada exitosamente.',
@@ -109,7 +114,7 @@ class EvaluationOrderController extends Controller
     {
         $orders = EvaluationOrder::with([
             'client:id,company_name,trade_name,rfc',
-            'examinee:id,full_name,curp',
+            'examinee:id,full_name,curp,status',
             'evaluationType:id,name,cost,modality',
         ])
         ->whereNotNull('receipt_file_path')
