@@ -30,7 +30,7 @@ class NotifyStaffPsychometricTestJob implements ShouldQueue
             $examinee = Examinee::with([
                 'client',
                 'appointments' => function ($query) {
-                    $query->whereIn('status', ['scheduled', 'in_progress'])
+                    $query->whereNotIn('status', ['cancelled', 'no_show'])
                           ->with('psychologist');
                 },
             ])->find($this->examineeId);
@@ -54,7 +54,7 @@ class NotifyStaffPsychometricTestJob implements ShouldQueue
                 ->whereNotNull('email')
                 ->pluck('email');
 
-            // 2. Si el evaluado ya tiene cita agendada, agregar al psicólogo asignado
+            // 2. Si el evaluado ya tiene cita agendada/atendida, agregar al psicólogo asignado
             $psychologistEmails = $examinee->appointments
                 ->pluck('psychologist.email')
                 ->filter();
