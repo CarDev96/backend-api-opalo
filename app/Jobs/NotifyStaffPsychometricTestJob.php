@@ -27,7 +27,14 @@ class NotifyStaffPsychometricTestJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $examinee = Examinee::with('client')->find($this->examineeId);
+            $examinee = Examinee::with([
+                'client',
+                'appointments' => function ($query) {
+                    $query->whereIn('status', ['scheduled', 'in_progress'])
+                          ->with('psychologist');
+                },
+            ])->find($this->examineeId);
+
             $testRecord = ExamineePsychometricTest::with('psychometricTest')->find($this->testRecordId);
 
             if (!$examinee || !$testRecord) {
@@ -40,14 +47,27 @@ class NotifyStaffPsychometricTestJob implements ShouldQueue
             $testName     = $testRecord->psychometricTest?->name ?? 'Prueba Psicométrica';
             $originalName = $testRecord->original_name ?? 'Documento adjunto';
 
+            // 1. Obtener correos del staff operativo (admin y trabajo social)
             $roleIds = Role::whereIn('name', ['admin', 'social_work'])->pluck('id');
 
-            $staffUsers = User::whereIn('role_id', $roleIds)
+            $recipientEmails = User::whereIn('role_id', $roleIds)
                 ->whereNotNull('email')
-                ->get();
+                ->pluck('email');
 
-            foreach ($staffUsers as $user) {
-                Mail::to($user->email)->send(
+            // 2. Si el evaluado ya tiene cita agendada, agregar al psicólogo asignado
+            $psychologistEmails = $examinee->appointments
+                ->pluck('psychologist.email')
+                ->filter();
+
+            // 3. Unificar y eliminar duplicados
+            $allRecipients = $recipientEmails
+                ->merge($psychologistEmails)
+                ->map(fn ($email) => strtolower(trim($email)))
+                ->unique()
+                ->values();
+
+            foreach ($allRecipients as $email) {
+                Mail::to($email)->send(
                     new PsychometricTestUploadedMail(
                         $examineeName,
                         $companyName,
